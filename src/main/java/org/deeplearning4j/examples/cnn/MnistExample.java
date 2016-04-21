@@ -1,5 +1,7 @@
 package org.deeplearning4j.examples.cnn;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.util.ToolRunner;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -21,15 +23,25 @@ import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
+import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import util.HdfsWriter;
 
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
-/**Simple example of learning MNIST with spark (local)
+/**
+ * Simple example of learning MNIST with spark (local)
  * NOTE: This example runs and gives reasonable results, but better performance could be obtained
  * with some additional tuning of network hyperparameters
+ *
  * @author Alex Black
  */
 public class MnistExample {
@@ -40,7 +52,7 @@ public class MnistExample {
         //Create spark context
         int nCores = 6; //Number of CPU cores to use for training
         SparkConf sparkConf = new SparkConf();
-        sparkConf.setMaster("local[" + nCores + "]");
+//        sparkConf.setMaster("local[" + nCores + "]");
         sparkConf.setAppName("MNIST");
         sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
@@ -59,18 +71,18 @@ public class MnistExample {
         log.info("Load data....");
         DataSetIterator mnistIter = new MnistDataSetIterator(1, numSamples, true);
         List<DataSet> allData = new ArrayList<>(numSamples);
-        while(mnistIter.hasNext()){
+        while (mnistIter.hasNext()) {
             allData.add(mnistIter.next());
         }
-        Collections.shuffle(allData,new Random(12345));
+        Collections.shuffle(allData, new Random(12345));
 
         Iterator<DataSet> iter = allData.iterator();
         List<DataSet> train = new ArrayList<>(nTrain);
         List<DataSet> test = new ArrayList<>(nTest);
 
         int c = 0;
-        while(iter.hasNext()){
-            if(c++ <= nTrain) train.add(iter.next());
+        while (iter.hasNext()) {
+            if (c++ <= nTrain) train.add(iter.next());
             else test.add(iter.next());
         }
 
@@ -99,7 +111,7 @@ public class MnistExample {
                 .layer(2, new ConvolutionLayer.Builder(5, 5)
                         .nIn(20)
                         .nOut(50)
-                        .stride(2,2)
+                        .stride(2, 2)
                         .weightInit(WeightInit.XAVIER)
                         .activation("relu")
                         .build())
@@ -114,7 +126,7 @@ public class MnistExample {
                         .activation("softmax")
                         .build())
                 .backprop(true).pretrain(false);
-        new ConvolutionLayerSetup(builder,28,28,1);
+        new ConvolutionLayerSetup(builder, 28, 28, 1);
 
         MultiLayerConfiguration conf = builder.build();
         MultiLayerNetwork net = new MultiLayerNetwork(conf);
@@ -127,20 +139,37 @@ public class MnistExample {
         //Train network
         log.info("--- Starting network training ---");
         int nEpochs = 5;
-        for( int i=0; i<nEpochs; i++ ){
+        for (int i = 0; i < nEpochs; i++) {
             //Run learning. Here, we are training with approximately 'batchSize' examples on each executor
             net = sparkNetwork.fitDataSet(sparkDataTrain, nCores * batchSize);
             System.out.println("----- Epoch " + i + " complete -----");
 
             //Evaluate (locally)
             Evaluation eval = new Evaluation();
-            for(DataSet ds : test){
+            for (DataSet ds : test) {
                 INDArray output = net.output(ds.getFeatureMatrix());
-                eval.eval(ds.getLabels(),output);
+                eval.eval(ds.getLabels(), output);
             }
             log.info(eval.stats());
         }
 
         log.info("****************Example finished********************");
+
+        log.info("Sve configure file to hdfs");
+        //Write the network parameters:
+        try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get("coefficients.bin")))) {
+            Nd4j.write(net.params(), dos);
+        }
+
+        //Write the network configuration:
+        FileUtils.write(new File("conf.json"), net.getLayerWiseConfigurations().toJson());
+
+        //Save the updater:
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("updater.bin"))) {
+            oos.writeObject(net.getUpdater());
+        }
+        ToolRunner.run(new HdfsWriter(), new String[]{"conf.json", "/user/hduser/mnist_model/conf.json"});
+        ToolRunner.run(new HdfsWriter(), new String[]{"updater.bin", "/user/hduser/mnist_model/updater.bin"});
+        ToolRunner.run(new HdfsWriter(), new String[]{"coefficients.bin", "/user/hduser/mnist_model/coefficients.bin"});
     }
 }
