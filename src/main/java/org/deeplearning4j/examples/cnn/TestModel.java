@@ -35,33 +35,32 @@ public class TestModel {
 	
 	public static void main(String[] args) throws Exception{
 		
-		//Create spark context
-        int nCores = 6;
-        SparkConf sparkConf = new SparkConf();
-        sparkConf.setMaster("local[" + nCores + "]");
-        sparkConf.setAppName("MNIST");
-        sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
-        JavaSparkContext sc = new JavaSparkContext(sparkConf);
+	    //Create spark context
+	    int nCores = 6;
+	    SparkConf sparkConf = new SparkConf();
+	    sparkConf.setMaster("local[" + nCores + "]");
+	    sparkConf.setAppName("MNIST");
+	    sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
+	    JavaSparkContext sc = new JavaSparkContext(sparkConf);
+	        
+	    //------Simple Dataset--------
+	    List<DataSet> test = new ArrayList<>(1);
+            BufferedReader bf;
+	    float[] input = new float[784];
+	    bf = new BufferedReader(new FileReader( new File("input.txt") ));
+	    String[] s = bf.readLine().split(",");
+	    for(int i=0; i<s.length; i++) input[i] = Float.valueOf(s[i]);
+		
+	    INDArray array1 = Nd4j.create(input);
+	    INDArray array2 = Nd4j.create(new int[]{1});
+	    DataSet inds = new DataSet(array1, array2);
+	    test.add(inds);
+	    //----------------------------
+			
+            JavaRDD<DataSet> sparkDataTrain = sc.parallelize(test);
+            sparkDataTrain.persist(StorageLevel.MEMORY_ONLY());
         
-        //------Simple Dataset--------
-        List<DataSet> test = new ArrayList<>(1);
-		BufferedReader bf;
-		float[] input = new float[784];
-		bf = new BufferedReader(new FileReader( new File("input.txt") ));
-		String[] s = bf.readLine().split(",");
-		for(int i=0; i<s.length; i++) input[i] = Float.valueOf(s[i]);
-		
-		INDArray array1 = Nd4j.create(input);
-		INDArray array2 = Nd4j.create(new int[]{1});
-		DataSet inds = new DataSet(array1, array2);
-		test.add(inds);
-        //----------------------------
-		
-        JavaRDD<DataSet> sparkDataTrain = sc.parallelize(test);
-        sparkDataTrain.persist(StorageLevel.MEMORY_ONLY());
-        
-		
-		//Load network configuration from disk:
+       	    //Load network configuration from disk:
 	    MultiLayerConfiguration confFromJson = 
 	    		MultiLayerConfiguration.fromJson(FileUtils.readFileToString(new File("conf.json")));
 
@@ -88,16 +87,15 @@ public class TestModel {
 	    //log
 	    //Run learning. Here, we are training with approximately 'batchSize' examples on each executor
 	    savedNetwork = sparkNetwork.fitDataSet(sparkDataTrain, 1);
-        System.out.println("----- Conclusion -----");
-
-        //Evaluate (locally)  改！
-        Evaluation eval = new Evaluation();
-        for(DataSet ds : test){
-            INDArray output = savedNetwork.output(ds.getFeatureMatrix());
-            System.out.println("**" + output);
-            
-            eval.eval(ds.getLabels(),output);
-        }
-        log.info(eval.stats());
+	    System.out.println("----- Conclusion -----");
+	
+	    //Evaluate (locally)  改！
+	    Evaluation eval = new Evaluation();
+	    for(DataSet ds : test){
+	    	INDArray output = savedNetwork.output(ds.getFeatureMatrix());
+	    	System.out.println("**" + output);
+		eval.eval(ds.getLabels(),output);
+	    }
+	    log.info(eval.stats());
 	}
 }
