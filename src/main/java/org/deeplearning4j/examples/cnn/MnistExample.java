@@ -177,7 +177,7 @@ public class MnistExample {
             INDArray output = net.output(ds.getFeatureMatrix());
             eval.eval(ds.getLabels(), output);
         }
-        log.info(eval.stats());
+        log.warn(eval.stats());
         log.info("****************Example finished********************");
 
         log.info("Sve configure file to hdfs");
