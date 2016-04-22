@@ -1,4 +1,4 @@
-package org.deeplearning4j.examples.mlp;
+package util;
 
 import org.apache.commons.io.FileUtils;
 import org.deeplearning4j.datasets.iterator.DataSetIterator;
