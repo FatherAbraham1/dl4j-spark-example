@@ -50,7 +50,7 @@ import java.util.*;
 public class MnistExample {
     private static final Logger log = LoggerFactory.getLogger(MnistExample.class);
 
-    static class AvgCount implements java.io.Serializable {
+    public static class AvgCount implements java.io.Serializable {
         public AvgCount() {
             total_ = 0;
             num_ = 0;
@@ -66,7 +66,7 @@ public class MnistExample {
         public int num_;
     }
 
-    private static class AvgRegistrator implements KryoRegistrator {
+    public static class AvgRegistrator implements KryoRegistrator {
         public void registerClasses(Kryo kryo) {
             kryo.register(AvgCount.class, new FieldSerializer(kryo, AvgCount.class));
         }
