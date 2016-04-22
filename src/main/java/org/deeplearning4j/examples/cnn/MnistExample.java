@@ -1,10 +1,13 @@
 package org.deeplearning4j.examples.cnn;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.serializers.FieldSerializer;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.serializer.KryoRegistrator;
 import org.apache.spark.storage.StorageLevel;
 import org.deeplearning4j.datasets.iterator.impl.MnistDataSetIterator;
 import org.deeplearning4j.eval.Evaluation;
@@ -47,6 +50,28 @@ import java.util.*;
 public class MnistExample {
     private static final Logger log = LoggerFactory.getLogger(MnistExample.class);
 
+    static class AvgCount implements java.io.Serializable {
+        public AvgCount() {
+            total_ = 0;
+            num_ = 0;
+        }
+        public AvgCount(int total, int num) {
+            total_ = total;
+            num_ = num;
+        }
+        public float avg() {
+            return total_ / (float) num_;
+        }
+        public int total_;
+        public int num_;
+    }
+
+    private static class AvgRegistrator implements KryoRegistrator {
+        public void registerClasses(Kryo kryo) {
+            kryo.register(AvgCount.class, new FieldSerializer(kryo, AvgCount.class));
+        }
+    }
+
     public static void main(String[] args) throws Exception {
 
         //Create spark context
@@ -55,6 +80,7 @@ public class MnistExample {
 //        sparkConf.setMaster("local[" + nCores + "]");
         sparkConf.setAppName("MNIST");
         sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
+        sparkConf.set("spark.kryo.registrator", AvgRegistrator.class.getName());
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
 
@@ -63,7 +89,7 @@ public class MnistExample {
         int numSamples = 60000;
         int nTrain = 50000;
         int nTest = 10000;
-        int batchSize = 50;
+        int batchSize = 20;
         int iterations = 1;
         int seed = 123;
 
@@ -138,7 +164,7 @@ public class MnistExample {
 
         //Train network
         log.info("--- Starting network training ---");
-        int nEpochs = 5;
+        int nEpochs = 1;
         for (int i = 0; i < nEpochs; i++) {
             //Run learning. Here, we are training with approximately 'batchSize' examples on each executor
             net = sparkNetwork.fitDataSet(sparkDataTrain, nCores * batchSize);
