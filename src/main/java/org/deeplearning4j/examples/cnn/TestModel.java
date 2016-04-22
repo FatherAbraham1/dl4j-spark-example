@@ -62,17 +62,17 @@ public class TestModel {
         
        	    //Load network configuration from disk:
 	    MultiLayerConfiguration confFromJson = 
-	    		MultiLayerConfiguration.fromJson(FileUtils.readFileToString(new File("conf.json")));
+	    		MultiLayerConfiguration.fromJson(FileUtils.readFileToString(new File("model/conf.json")));
 
 	    //Load parameters from disk:
 	    INDArray newParams;
-	    try(DataInputStream dis = new DataInputStream(new FileInputStream("coefficients.bin"))){
+	    try(DataInputStream dis = new DataInputStream(new FileInputStream("model/coefficients.bin"))){
 	        newParams = Nd4j.read(dis);
 	    }
 	    
 	    //Load the updater:
 	    org.deeplearning4j.nn.api.Updater updater;
-	    try(ObjectInputStream ois = new ObjectInputStream(new FileInputStream("updater.bin"))){
+	    try(ObjectInputStream ois = new ObjectInputStream(new FileInputStream("model/updater.bin"))){
 	        updater = (org.deeplearning4j.nn.api.Updater) ois.readObject();
 	    }
 
