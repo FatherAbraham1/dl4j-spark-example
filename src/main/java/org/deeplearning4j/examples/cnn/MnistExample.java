@@ -32,10 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import util.HdfsWriter;
 
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -71,6 +68,7 @@ public class MnistExample {
         int iterations = 1;
         int seed = 123;
         int nEpochs = 1;
+        boolean loadModel = false;
 
         //Load data into memory
         log.info("Load data....");
@@ -93,52 +91,79 @@ public class MnistExample {
 
         JavaRDD<DataSet> sparkDataTrain = sc.parallelize(train);
         sparkDataTrain.persist(StorageLevel.MEMORY_ONLY());
+        MultiLayerNetwork net;
+        if (loadModel) {
+            log.info("load model...");
+            //Load parameters from disk:
+            INDArray newParams;
+            try (DataInputStream dis = new DataInputStream(new FileInputStream("model/coefficients.bin"))) {
+                newParams = Nd4j.read(dis);
+            }
 
-        //Set up network configuration
-        log.info("Build model....");
-        MultiLayerConfiguration.Builder builder = new NeuralNetConfiguration.Builder()
-                .seed(seed)
-                .iterations(iterations)
-                .regularization(true).l2(0.0005)
-                .learningRate(0.01)//.biasLearningRate(0.02)
-                //.learningRateDecayPolicy(LearningRatePolicy.Inverse).lrPolicyDecayRate(0.001).lrPolicyPower(0.75)
-                .weightInit(WeightInit.XAVIER)
-                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-                .updater(Updater.NESTEROVS).momentum(0.9)
-                .list(6)
-                .layer(0, new ConvolutionLayer.Builder(5, 5)
-                        .nIn(nChannels)
-                        .stride(1, 1)
-                        .nOut(20)
-                        .activation("identity")
-                        .build())
-                .layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-                        .kernelSize(2,2)
-                        .stride(2,2)
-                        .build())
-                .layer(2, new ConvolutionLayer.Builder(5, 5)
-                        .nIn(nChannels)
-                        .stride(1, 1)
-                        .nOut(50)
-                        .activation("identity")
-                        .build())
-                .layer(3, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-                        .kernelSize(2,2)
-                        .stride(2,2)
-                        .build())
-                .layer(4, new DenseLayer.Builder().activation("relu")
-                        .nOut(500).build())
-                .layer(5, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
-                        .nOut(outputNum)
-                        .activation("softmax")
-                        .build())
-                .backprop(true).pretrain(false);
-        new ConvolutionLayerSetup(builder, 28, 28, 1);
+            //Load network configuration from disk:
+            MultiLayerConfiguration confFromJson = MultiLayerConfiguration
+                    .fromJson(FileUtils.readFileToString(new File("model/conf.json")));
 
-        MultiLayerConfiguration conf = builder.build();
-        MultiLayerNetwork net = new MultiLayerNetwork(conf);
-        net.init();
-        net.setUpdater(null);   //Workaround for minor bug in 0.4-rc3.8
+            //Create a MultiLayerNetwork from the saved configuration and parameters
+            net = new MultiLayerNetwork(confFromJson);
+            net.init();
+            net.setParameters(newParams);
+
+            //Load the updater:
+            org.deeplearning4j.nn.api.Updater updater;
+            try(ObjectInputStream ois = new ObjectInputStream(new FileInputStream("model/updater.bin"))){
+                updater = (org.deeplearning4j.nn.api.Updater) ois.readObject();
+            }
+
+            //Set the updater in the network
+            net.setUpdater(updater);
+        } else {
+            //Set up network configuration
+            log.info("Build model....");
+            MultiLayerConfiguration.Builder builder = new NeuralNetConfiguration.Builder()
+                    .seed(seed)
+                    .iterations(iterations)
+                    .regularization(true).l2(0.0005)
+                    .learningRate(0.01)//.biasLearningRate(0.02)
+                    //.learningRateDecayPolicy(LearningRatePolicy.Inverse).lrPolicyDecayRate(0.001).lrPolicyPower(0.75)
+                    .weightInit(WeightInit.XAVIER)
+                    .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+                    .updater(Updater.NESTEROVS).momentum(0.9)
+                    .list(6)
+                    .layer(0, new ConvolutionLayer.Builder(5, 5)
+                            .nIn(nChannels)
+                            .stride(1, 1)
+                            .nOut(20)
+                            .activation("identity")
+                            .build())
+                    .layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+                            .kernelSize(2, 2)
+                            .stride(2, 2)
+                            .build())
+                    .layer(2, new ConvolutionLayer.Builder(5, 5)
+                            .nIn(nChannels)
+                            .stride(1, 1)
+                            .nOut(50)
+                            .activation("identity")
+                            .build())
+                    .layer(3, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+                            .kernelSize(2, 2)
+                            .stride(2, 2)
+                            .build())
+                    .layer(4, new DenseLayer.Builder().activation("relu")
+                            .nOut(500).build())
+                    .layer(5, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+                            .nOut(outputNum)
+                            .activation("softmax")
+                            .build())
+                    .backprop(true).pretrain(false);
+            new ConvolutionLayerSetup(builder, 28, 28, 1);
+
+            MultiLayerConfiguration conf = builder.build();
+            net = new MultiLayerNetwork(conf);
+            net.init();
+            net.setUpdater(null);   //Workaround for minor bug in 0.4-rc3.8
+        }
 
         //Create Spark multi layer network from configuration
         SparkDl4jMultiLayer sparkNetwork = new SparkDl4jMultiLayer(sc, net);
