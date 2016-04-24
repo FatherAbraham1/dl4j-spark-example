@@ -17,17 +17,12 @@ import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
 import org.deeplearning4j.nn.conf.layers.setup.ConvolutionLayerSetup;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
-import org.deeplearning4j.nn.updater.AdaGradUpdater;
-import org.deeplearning4j.nn.updater.MultiLayerUpdater;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer;
-import org.nd4j.linalg.api.buffer.FloatBuffer;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.cpu.NDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.learning.AdaGrad;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,17 +50,14 @@ public class MnistExample {
 //        sparkConf.setMaster("local[" + nCores + "]");
         sparkConf.setAppName("MNIST");
         sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
-        sparkConf.registerKryoClasses(new Class[] {FloatBuffer.class, NDArray.class, AdaGrad.class, DataSet.class,
-                AdaGradUpdater.class, MultiLayerUpdater.class, scala.Tuple2[].class, Object[].class});
-//        sparkConf.set("spark.kryo.registrator", "org.deeplearning4j.examples.cnn.HydraKryoSerializer");
-        JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
+        JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
         int nChannels = 1;
         int outputNum = 10;
-        int numSamples = 60000;
-        int nTrain = 50000;
-        int nTest = 10000;
+        int numSamples = 600;
+        int nTrain = 500;
+        int nTest = 100;
         int batchSize = 64;
         int iterations = 1;
         int seed = 123;
@@ -200,9 +192,5 @@ public class MnistExample {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("model/updater.bin"))) {
             oos.writeObject(net.getUpdater());
         }
-//        ToolRunner.run(new HdfsWriter(), new String[]{"model/conf.json", "/user/hduser/mnist_model/conf.json"});
-//        ToolRunner.run(new HdfsWriter(), new String[]{"model/updater.bin", "/user/hduser/mnist_model/updater.bin"});
-//        ToolRunner.run(new HdfsWriter(), new String[]{"model/coefficients.bin",
-//                "/user/hduser/mnist_model/coefficients.bin"});
     }
 }
