@@ -1,12 +1,9 @@
 package org.deeplearning4j.examples.cnn;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.serializers.FieldSerializer;
 import org.apache.commons.io.FileUtils;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.serializer.KryoRegistrator;
 import org.apache.spark.storage.StorageLevel;
 import org.canova.api.records.reader.RecordReader;
 import org.canova.api.split.FileSplit;
@@ -24,12 +21,17 @@ import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
 import org.deeplearning4j.nn.conf.layers.setup.ConvolutionLayerSetup;
 import org.deeplearning4j.nn.conf.preprocessor.CnnToFeedForwardPreProcessor;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.deeplearning4j.nn.updater.AdaGradUpdater;
+import org.deeplearning4j.nn.updater.MultiLayerUpdater;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer;
+import org.nd4j.linalg.api.buffer.FloatBuffer;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.cpu.NDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.learning.AdaGrad;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +73,9 @@ public class CifarExample {
 //        sparkConf.setMaster("local[" + nCores + "]");
         sparkConf.setAppName("CIFAR");
         sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
-        sparkConf.set("spark.kryo.registrator", "util.HydraKryoSerializer");
+        sparkConf.registerKryoClasses(new Class[] {FloatBuffer.class, NDArray.class, AdaGrad.class, DataSet.class,
+                AdaGradUpdater.class, MultiLayerUpdater.class, scala.Tuple2[].class, Object[].class});
+//        sparkConf.set("spark.kryo.registrator", "org.deeplearning4j.examples.cnn.HydraKryoSerializer");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
         //Load data into memory
@@ -110,7 +114,7 @@ public class CifarExample {
         }
 
         JavaRDD<DataSet> sparkDataTrain = sc.parallelize(train);
-        sparkDataTrain.persist(StorageLevel.MEMORY_ONLY());
+//        sparkDataTrain.persist(StorageLevel.MEMORY_ONLY());
 
         //Set up network configuration
         log.info("Build model....");
