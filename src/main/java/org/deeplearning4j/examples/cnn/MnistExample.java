@@ -75,9 +75,9 @@ public class MnistExample {
     public static void main(String[] args) throws Exception {
 
         //Create spark context
-        int nCores = 8; //Number of CPU cores to use for training
+        int nCores = 4; //Number of CPU cores to use for training
         SparkConf sparkConf = new SparkConf();
-//        sparkConf.setMaster("local[" + nCores + "]");
+        sparkConf.setMaster("local[" + nCores + "]");
         sparkConf.setAppName("MNIST");
         sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
         sparkConf.set("spark.kryo.registrator", AvgRegistrator.class.getName());
@@ -89,9 +89,10 @@ public class MnistExample {
         int numSamples = 60000;
         int nTrain = 50000;
         int nTest = 10000;
-        int batchSize = 20;
+        int batchSize = 64;
         int iterations = 1;
         int seed = 123;
+        int nEpochs = 5;
 
         //Load data into memory
         log.info("Load data....");
@@ -121,34 +122,36 @@ public class MnistExample {
                 .seed(seed)
                 .iterations(iterations)
                 .regularization(true).l2(0.0005)
-                .learningRate(0.1)
+                .learningRate(0.01)//.biasLearningRate(0.02)
+                //.learningRateDecayPolicy(LearningRatePolicy.Inverse).lrPolicyDecayRate(0.001).lrPolicyPower(0.75)
+                .weightInit(WeightInit.XAVIER)
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-                .updater(Updater.ADAGRAD)
+                .updater(Updater.NESTEROVS).momentum(0.9)
                 .list(6)
                 .layer(0, new ConvolutionLayer.Builder(5, 5)
                         .nIn(nChannels)
                         .stride(1, 1)
                         .nOut(20)
-                        .weightInit(WeightInit.XAVIER)
-                        .activation("relu")
+                        .activation("identity")
                         .build())
-                .layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX, new int[]{2, 2})
+                .layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+                        .kernelSize(2,2)
+                        .stride(2,2)
                         .build())
                 .layer(2, new ConvolutionLayer.Builder(5, 5)
-                        .nIn(20)
+                        .nIn(nChannels)
+                        .stride(1, 1)
                         .nOut(50)
-                        .stride(2, 2)
-                        .weightInit(WeightInit.XAVIER)
-                        .activation("relu")
+                        .activation("identity")
                         .build())
-                .layer(3, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX, new int[]{2, 2})
+                .layer(3, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
+                        .kernelSize(2,2)
+                        .stride(2,2)
                         .build())
                 .layer(4, new DenseLayer.Builder().activation("relu")
-                        .weightInit(WeightInit.XAVIER)
-                        .nOut(200).build())
+                        .nOut(500).build())
                 .layer(5, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
                         .nOut(outputNum)
-                        .weightInit(WeightInit.XAVIER)
                         .activation("softmax")
                         .build())
                 .backprop(true).pretrain(false);
@@ -164,7 +167,6 @@ public class MnistExample {
 
         //Train network
         log.info("--- Starting network training ---");
-        int nEpochs = 1;
         for (int i = 0; i < nEpochs; i++) {
             //Run learning. Here, we are training with approximately 'batchSize' examples on each executor
             net = sparkNetwork.fitDataSet(sparkDataTrain, nCores * batchSize);
@@ -193,9 +195,9 @@ public class MnistExample {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("model/updater.bin"))) {
             oos.writeObject(net.getUpdater());
         }
-        ToolRunner.run(new HdfsWriter(), new String[]{"model/conf.json", "/user/hduser/mnist_model/conf.json"});
-        ToolRunner.run(new HdfsWriter(), new String[]{"model/updater.bin", "/user/hduser/mnist_model/updater.bin"});
-        ToolRunner.run(new HdfsWriter(), new String[]{"model/coefficients.bin",
-                "/user/hduser/mnist_model/coefficients.bin"});
+//        ToolRunner.run(new HdfsWriter(), new String[]{"model/conf.json", "/user/hduser/mnist_model/conf.json"});
+//        ToolRunner.run(new HdfsWriter(), new String[]{"model/updater.bin", "/user/hduser/mnist_model/updater.bin"});
+//        ToolRunner.run(new HdfsWriter(), new String[]{"model/coefficients.bin",
+//                "/user/hduser/mnist_model/coefficients.bin"});
     }
 }
