@@ -50,37 +50,15 @@ import java.util.*;
 public class MnistExample {
     private static final Logger log = LoggerFactory.getLogger(MnistExample.class);
 
-    public static class AvgCount implements java.io.Serializable {
-        public AvgCount() {
-            total_ = 0;
-            num_ = 0;
-        }
-        public AvgCount(int total, int num) {
-            total_ = total;
-            num_ = num;
-        }
-        public float avg() {
-            return total_ / (float) num_;
-        }
-        public int total_;
-        public int num_;
-    }
-
-    public static class AvgRegistrator implements KryoRegistrator {
-        public void registerClasses(Kryo kryo) {
-            kryo.register(AvgCount.class, new FieldSerializer(kryo, AvgCount.class));
-        }
-    }
-
     public static void main(String[] args) throws Exception {
 
         //Create spark context
-        int nCores = 4; //Number of CPU cores to use for training
+        int nCores = 10; //Number of CPU cores to use for training
         SparkConf sparkConf = new SparkConf();
-        sparkConf.setMaster("local[" + nCores + "]");
+//        sparkConf.setMaster("local[" + nCores + "]");
         sparkConf.setAppName("MNIST");
         sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
-        sparkConf.set("spark.kryo.registrator", AvgRegistrator.class.getName());
+        sparkConf.set("spark.kryo.registrator", "util.HydraKryoSerializer");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
 
@@ -92,7 +70,7 @@ public class MnistExample {
         int batchSize = 64;
         int iterations = 1;
         int seed = 123;
-        int nEpochs = 5;
+        int nEpochs = 1;
 
         //Load data into memory
         log.info("Load data....");
