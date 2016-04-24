@@ -1,9 +1,12 @@
 package org.deeplearning4j.examples.cnn;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.serializers.FieldSerializer;
 import org.apache.commons.io.FileUtils;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.serializer.KryoRegistrator;
 import org.apache.spark.storage.StorageLevel;
 import org.canova.api.records.reader.RecordReader;
 import org.canova.api.split.FileSplit;
@@ -51,7 +54,7 @@ public class CifarExample {
     private static final int WIDTH = 32;
     private static final int HEIGHT = 32;
     private static final int CHANNELS = 3;
-    private static final int BATCH_SIZE = 32;
+    private static final int BATCH_SIZE = 64;
     private static final int ITERATIONS = 1;
     private static final int SEED = 123;
     private static final int SAMPLE_NUM = 50000;
@@ -68,6 +71,7 @@ public class CifarExample {
 //        sparkConf.setMaster("local[" + nCores + "]");
         sparkConf.setAppName("CIFAR");
         sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
+        sparkConf.set("spark.kryo.registrator", AvgRegistrator.class.getName());
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
         //Load data into memory
@@ -186,6 +190,31 @@ public class CifarExample {
         FileUtils.write(new File("model/c_conf.json"), net.getLayerWiseConfigurations().toJson());
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("model/c_updater.bin"))) {
             oos.writeObject(net.getUpdater());
+        }
+    }
+
+    public static class AvgCount implements java.io.Serializable {
+        public int total_;
+        public int num_;
+
+        public AvgCount() {
+            total_ = 0;
+            num_ = 0;
+        }
+
+        public AvgCount(int total, int num) {
+            total_ = total;
+            num_ = num;
+        }
+
+        public float avg() {
+            return total_ / (float) num_;
+        }
+    }
+
+    public static class AvgRegistrator implements KryoRegistrator {
+        public void registerClasses(Kryo kryo) {
+            kryo.register(AvgCount.class, new FieldSerializer(kryo, AvgCount.class));
         }
     }
 }
