@@ -199,7 +199,7 @@ public class CifarExample {
                 INDArray output = net.output(ds.getFeatureMatrix());
                 eval.eval(ds.getLabels(), output);
             }
-            log.info(eval.stats());
+            log.warn(eval.stats());
 
             log.info("****************Save configure files****************");
             try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get("model/c_coefficients.bin")))) {
