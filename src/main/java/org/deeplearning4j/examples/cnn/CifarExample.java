@@ -30,10 +30,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -50,7 +47,7 @@ public class CifarExample {
     private static final int WIDTH = 32;
     private static final int HEIGHT = 32;
     private static final int CHANNELS = 3;
-    private static final int BATCH_SIZE = 64;
+    private static final int BATCH_SIZE = 60;
     private static final int ITERATIONS = 1;
     private static final int SEED = 123;
     private static final int SAMPLE_NUM = 50000;
@@ -61,7 +58,7 @@ public class CifarExample {
     public static void main(String[] args) throws Exception {
 
         //Create spark context
-        int nCores = 10; //Number of CPU cores to use for training
+        int nCores = 1; //Number of CPU cores to use for training
         int nEpochs = 1;
         SparkConf sparkConf = new SparkConf();
 //        sparkConf.setMaster("local[" + nCores + "]");
@@ -105,57 +102,86 @@ public class CifarExample {
         }
 
         JavaRDD<DataSet> sparkDataTrain = sc.parallelize(train);
-//        sparkDataTrain.persist(StorageLevel.MEMORY_ONLY());
+//        sparkDataTrain.persist(StorageLevel.MEMORY_ONLY());File f = new File("model/coefficients.bin");
+        MultiLayerNetwork net;
+        File f = new File("model/c_coefficients.bin");
+        if (f.exists() && !f.isDirectory()) {
+            log.info("load model...");
+            //Load parameters from disk:
+            INDArray newParams;
+            try (DataInputStream dis = new DataInputStream(new FileInputStream("model/c_coefficients.bin"))) {
+                newParams = Nd4j.read(dis);
+            }
 
-        //Set up network configuration
-        log.info("Build model....");
-        MultiLayerConfiguration.Builder builder = new NeuralNetConfiguration.Builder()
-                .seed(SEED)
-                .iterations(ITERATIONS)
-                .momentum(0.9)
-                .regularization(true)
-                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-                .updater(Updater.ADAGRAD)
-                .list(6)
-                .layer(0, new ConvolutionLayer.Builder(5, 5)
-                        .nIn(CHANNELS)
-                        .stride(1, 1)
-                        .nOut(20)
-                        .weightInit(WeightInit.XAVIER)
-                        .activation("relu")
-                        .build())
-                .layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX, new int[]{2, 2})
-                        .build())
-                .layer(2, new ConvolutionLayer.Builder(5, 5)
-                        .nIn(20)
-                        .nOut(40)
-                        .stride(1, 1)
-                        .weightInit(WeightInit.XAVIER)
-                        .activation("relu")
-                        .build())
-                .layer(3, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX, new int[]{2, 2})
-                        .build())
-                .layer(4, new DenseLayer.Builder()
-                        .activation("relu")
-                        .weightInit(WeightInit.XAVIER)
-                        .nOut(1000)
-                        .dropOut(0.5)
-                        .build())
-                .layer(5, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
-                        .nOut(labels.size())
-                        .dropOut(0.5)
-                        .weightInit(WeightInit.XAVIER)
-                        .activation("softmax")
-                        .build())
-                .inputPreProcessor(4, new CnnToFeedForwardPreProcessor())
-                .backprop(true)
-                .pretrain(false);
-        new ConvolutionLayerSetup(builder, WIDTH, HEIGHT, CHANNELS);
+            //Load network configuration from disk:
+            MultiLayerConfiguration confFromJson = MultiLayerConfiguration
+                    .fromJson(FileUtils.readFileToString(new File("model/c_conf.json")));
 
-        MultiLayerConfiguration conf = builder.build();
-        MultiLayerNetwork net = new MultiLayerNetwork(conf);
-        net.init();
-        net.setUpdater(null);
+            //Create a MultiLayerNetwork from the saved configuration and parameters
+            net = new MultiLayerNetwork(confFromJson);
+            net.init();
+            net.setParameters(newParams);
+
+            //Load the updater:
+            org.deeplearning4j.nn.api.Updater updater;
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream("model/c_updater.bin"))) {
+                updater = (org.deeplearning4j.nn.api.Updater) ois.readObject();
+            }
+
+            //Set the updater in the network
+            net.setUpdater(updater);
+        } else {
+
+            //Set up network configuration
+            log.info("Build model....");
+            MultiLayerConfiguration.Builder builder = new NeuralNetConfiguration.Builder()
+                    .seed(SEED)
+                    .iterations(ITERATIONS)
+                    .momentum(0.9)
+                    .regularization(true)
+                    .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+                    .updater(Updater.ADAGRAD)
+                    .list(6)
+                    .layer(0, new ConvolutionLayer.Builder(5, 5)
+                            .nIn(CHANNELS)
+                            .stride(1, 1)
+                            .nOut(20)
+                            .weightInit(WeightInit.XAVIER)
+                            .activation("relu")
+                            .build())
+                    .layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX, new int[]{2, 2})
+                            .build())
+                    .layer(2, new ConvolutionLayer.Builder(5, 5)
+                            .nIn(20)
+                            .nOut(40)
+                            .stride(1, 1)
+                            .weightInit(WeightInit.XAVIER)
+                            .activation("relu")
+                            .build())
+                    .layer(3, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX, new int[]{2, 2})
+                            .build())
+                    .layer(4, new DenseLayer.Builder()
+                            .activation("relu")
+                            .weightInit(WeightInit.XAVIER)
+                            .nOut(1000)
+                            .dropOut(0.5)
+                            .build())
+                    .layer(5, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+                            .nOut(labels.size())
+                            .dropOut(0.5)
+                            .weightInit(WeightInit.XAVIER)
+                            .activation("softmax")
+                            .build())
+                    .inputPreProcessor(4, new CnnToFeedForwardPreProcessor())
+                    .backprop(true)
+                    .pretrain(false);
+            new ConvolutionLayerSetup(builder, WIDTH, HEIGHT, CHANNELS);
+
+            MultiLayerConfiguration conf = builder.build();
+            net = new MultiLayerNetwork(conf);
+            net.init();
+            net.setUpdater(null);
+        }
 
         SparkDl4jMultiLayer sparkNetwork = new SparkDl4jMultiLayer(sc, net);
 
@@ -166,25 +192,25 @@ public class CifarExample {
             log.info("Epoch " + i + "Start");
             net = sparkNetwork.fitDataSet(sparkDataTrain, nCores * BATCH_SIZE);
             log.info("Epoch " + i + "Complete");
+
+            log.info("****************Starting Evaluation********************");
+            Evaluation eval = new Evaluation();
+            for (DataSet ds : test) {
+                INDArray output = net.output(ds.getFeatureMatrix());
+                eval.eval(ds.getLabels(), output);
+            }
+            log.info(eval.stats());
+
+            log.info("****************Save configure files****************");
+            try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get("model/c_coefficients.bin")))) {
+                Nd4j.write(net.params(), dos);
+            }
+            FileUtils.write(new File("model/c_conf.json"), net.getLayerWiseConfigurations().toJson());
+            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("model/c_updater.bin"))) {
+                oos.writeObject(net.getUpdater());
+            }
         }
 
 
-        log.info("****************Starting Evaluation********************");
-        Evaluation eval = new Evaluation();
-        for (DataSet ds : test) {
-            INDArray output = net.output(ds.getFeatureMatrix());
-            eval.eval(ds.getLabels(), output);
-        }
-        log.info(eval.stats());
-
-
-        log.info("****************Save configure files****************");
-        try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get("model/c_coefficients.bin")))) {
-            Nd4j.write(net.params(), dos);
-        }
-        FileUtils.write(new File("model/c_conf.json"), net.getLayerWiseConfigurations().toJson());
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("model/c_updater.bin"))) {
-            oos.writeObject(net.getUpdater());
-        }
     }
 }

@@ -45,7 +45,7 @@ public class MnistExample {
     public static void main(String[] args) throws Exception {
 
         //Create spark context
-        int nCores = 10; //Number of CPU cores to use for training
+        int nCores = 1; //Number of CPU cores to use for training
         SparkConf sparkConf = new SparkConf();
 //        sparkConf.setMaster("local[" + nCores + "]");
         sparkConf.setAppName("MNIST");
@@ -55,14 +55,13 @@ public class MnistExample {
 
         int nChannels = 1;
         int outputNum = 10;
-        int numSamples = 600;
-        int nTrain = 500;
-        int nTest = 100;
-        int batchSize = 64;
+        int numSamples = 60000;
+        int nTrain = 50000;
+        int nTest = 10000;
+        int batchSize = 60;
         int iterations = 1;
         int seed = 123;
         int nEpochs = 1;
-        boolean loadModel = false;
 
         //Load data into memory
         log.info("Load data....");
@@ -86,7 +85,8 @@ public class MnistExample {
         JavaRDD<DataSet> sparkDataTrain = sc.parallelize(train);
         sparkDataTrain.persist(StorageLevel.MEMORY_ONLY());
         MultiLayerNetwork net;
-        if (loadModel) {
+        File f = new File("model/coefficients.bin");
+        if (f.exists() && !f.isDirectory()) {
             log.info("load model...");
             //Load parameters from disk:
             INDArray newParams;
@@ -168,29 +168,29 @@ public class MnistExample {
             //Run learning. Here, we are training with approximately 'batchSize' examples on each executor
             net = sparkNetwork.fitDataSet(sparkDataTrain, nCores * batchSize);
             System.out.println("----- Epoch " + i + " complete -----");
-        }
 
-        //Evaluate (locally)
-        Evaluation eval = new Evaluation();
-        for (DataSet ds : test) {
-            INDArray output = net.output(ds.getFeatureMatrix());
-            eval.eval(ds.getLabels(), output);
-        }
-        log.warn(eval.stats());
-        log.info("****************Example finished********************");
+            log.info("Sve configure file to hdfs");
+            //Write the network parameters:
+            try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get("model/coefficients.bin")))) {
+                Nd4j.write(net.params(), dos);
+            }
 
-        log.info("Sve configure file to hdfs");
-        //Write the network parameters:
-        try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get("model/coefficients.bin")))) {
-            Nd4j.write(net.params(), dos);
-        }
+            //Evaluate (locally)
+            Evaluation eval = new Evaluation();
+            for (DataSet ds : test) {
+                INDArray output = net.output(ds.getFeatureMatrix());
+                eval.eval(ds.getLabels(), output);
+            }
+            log.warn(eval.stats());
+            log.info("****************Example finished********************");
 
-        //Write the network configuration:
-        FileUtils.write(new File("model/conf.json"), net.getLayerWiseConfigurations().toJson());
+            //Write the network configuration:
+            FileUtils.write(new File("model/conf.json"), net.getLayerWiseConfigurations().toJson());
 
-        //Save the updater:
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("model/updater.bin"))) {
-            oos.writeObject(net.getUpdater());
+            //Save the updater:
+            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("model/updater.bin"))) {
+                oos.writeObject(net.getUpdater());
+            }
         }
     }
 }
