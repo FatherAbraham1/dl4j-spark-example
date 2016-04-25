@@ -1,4 +1,4 @@
-package org.deeplearning4j.examples.cnn;
+package java.util;
 
 import org.apache.commons.io.FileUtils;
 import org.canova.api.records.reader.RecordReader;
