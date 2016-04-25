@@ -4,6 +4,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.storage.StorageLevel;
 import org.canova.api.records.reader.RecordReader;
 import org.canova.api.split.FileSplit;
 import org.canova.image.recordreader.ImageRecordReader;
@@ -102,7 +103,7 @@ public class CifarExample {
         }
 
         JavaRDD<DataSet> sparkDataTrain = sc.parallelize(train);
-//        sparkDataTrain.persist(StorageLevel.MEMORY_ONLY());File f = new File("model/coefficients.bin");
+        sparkDataTrain.persist(StorageLevel.MEMORY_AND_DISK());
         MultiLayerNetwork net;
         File f = new File("model/c_coefficients.bin");
         if (f.exists() && !f.isDirectory()) {
