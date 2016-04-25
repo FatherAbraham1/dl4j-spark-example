@@ -45,7 +45,7 @@ public class MnistExample {
     public static void main(String[] args) throws Exception {
 
         //Create spark context
-        int nCores = 1; //Number of CPU cores to use for training
+        int nCores = 2; //Number of CPU cores to use for training
         SparkConf sparkConf = new SparkConf();
 //        sparkConf.setMaster("local[" + nCores + "]");
         sparkConf.setAppName("MNIST");
