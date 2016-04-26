@@ -114,8 +114,6 @@ public class MnistExample {
         } else {
             //Set up network configuration
             log.info("Build model....");
-            //Set up network configuration
-            log.info("Build model....");
             MultiLayerConfiguration.Builder builder = new NeuralNetConfiguration.Builder()
                     .seed(seed)
                     .iterations(iterations)
