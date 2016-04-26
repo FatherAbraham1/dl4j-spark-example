@@ -85,7 +85,7 @@ public class MnistExample {
         JavaRDD<DataSet> sparkDataTrain = sc.parallelize(train);
         sparkDataTrain.persist(StorageLevel.MEMORY_ONLY());
         MultiLayerNetwork net;
-        File f = new File("model/coefficients.bin");
+        File f = new File("model/1coefficients.bin");
         if (f.exists() && !f.isDirectory()) {
             log.info("load model...");
             //Load parameters from disk:
@@ -169,11 +169,6 @@ public class MnistExample {
             net = sparkNetwork.fitDataSet(sparkDataTrain, nCores * batchSize);
             System.out.println("----- Epoch " + i + " complete -----");
 
-            log.info("Sve configure file to hdfs");
-            //Write the network parameters:
-            try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get("model/coefficients.bin")))) {
-                Nd4j.write(net.params(), dos);
-            }
 
             //Evaluate (locally)
             Evaluation eval = new Evaluation();
@@ -182,7 +177,11 @@ public class MnistExample {
                 eval.eval(ds.getLabels(), output);
             }
             log.warn(eval.stats());
-            log.info("****************Example finished********************");
+            log.info("Sve configure file to hdfs");
+            //Write the network parameters:
+            try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get("model/coefficients.bin")))) {
+                Nd4j.write(net.params(), dos);
+            }
 
             //Write the network configuration:
             FileUtils.write(new File("model/conf.json"), net.getLayerWiseConfigurations().toJson());
@@ -192,5 +191,6 @@ public class MnistExample {
                 oos.writeObject(net.getUpdater());
             }
         }
+        log.info("****************Example finished********************");
     }
 }
