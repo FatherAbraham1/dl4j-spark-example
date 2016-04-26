@@ -45,9 +45,9 @@ public class MnistExample {
     public static void main(String[] args) throws Exception {
 
         //Create spark context
-        int nCores = 1; //Number of CPU cores to use for training
+        int nCores = 4; //Number of CPU cores to use for training
         SparkConf sparkConf = new SparkConf();
-//        sparkConf.setMaster("local[" + nCores + "]");
+        sparkConf.setMaster("local[" + nCores + "]");
         sparkConf.setAppName("MNIST");
         sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
 
@@ -55,9 +55,9 @@ public class MnistExample {
 
         int nChannels = 1;
         int outputNum = 10;
-        int numSamples = 60000;
-        int nTrain = 50000;
-        int nTest = 10000;
+        int numSamples = 6000;
+        int nTrain = 5000;
+        int nTest = 1000;
         int batchSize = 60;
         int iterations = 1;
         int seed = 123;
@@ -85,8 +85,9 @@ public class MnistExample {
         JavaRDD<DataSet> sparkDataTrain = sc.parallelize(train);
         sparkDataTrain.persist(StorageLevel.MEMORY_ONLY());
         MultiLayerNetwork net;
-        File f = new File("model/coefficients.bin");
-        if (f.exists() && !f.isDirectory()) {
+//        File f = new File("model/coefficients.bin");
+//        if (f.exists() && !f.isDirectory()) {
+        if (false) {
             log.info("load model...");
             //Load parameters from disk:
             INDArray newParams;
@@ -118,36 +119,34 @@ public class MnistExample {
                     .seed(seed)
                     .iterations(iterations)
                     .regularization(true).l2(0.0005)
-                    .learningRate(0.01)//.biasLearningRate(0.02)
-                    //.learningRateDecayPolicy(LearningRatePolicy.Inverse).lrPolicyDecayRate(0.001).lrPolicyPower(0.75)
-                    .weightInit(WeightInit.XAVIER)
+                    .learningRate(0.1)
                     .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-                    .updater(Updater.NESTEROVS).momentum(0.9)
+                    .updater(Updater.ADAGRAD)
                     .list(6)
                     .layer(0, new ConvolutionLayer.Builder(5, 5)
                             .nIn(nChannels)
                             .stride(1, 1)
                             .nOut(20)
-                            .activation("identity")
+                            .weightInit(WeightInit.XAVIER)
+                            .activation("relu")
                             .build())
-                    .layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-                            .kernelSize(2, 2)
-                            .stride(2, 2)
+                    .layer(1, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX, new int[]{2, 2})
                             .build())
                     .layer(2, new ConvolutionLayer.Builder(5, 5)
-                            .nIn(nChannels)
-                            .stride(1, 1)
+                            .nIn(20)
                             .nOut(50)
-                            .activation("identity")
-                            .build())
-                    .layer(3, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX)
-                            .kernelSize(2, 2)
                             .stride(2, 2)
+                            .weightInit(WeightInit.XAVIER)
+                            .activation("relu")
+                            .build())
+                    .layer(3, new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX, new int[]{2, 2})
                             .build())
                     .layer(4, new DenseLayer.Builder().activation("relu")
-                            .nOut(500).build())
+                            .weightInit(WeightInit.XAVIER)
+                            .nOut(200).build())
                     .layer(5, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
                             .nOut(outputNum)
+                            .weightInit(WeightInit.XAVIER)
                             .activation("softmax")
                             .build())
                     .backprop(true).pretrain(false);
