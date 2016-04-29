@@ -19,7 +19,6 @@ import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
 import org.deeplearning4j.nn.conf.layers.setup.ConvolutionLayerSetup;
-import org.deeplearning4j.nn.conf.preprocessor.CnnToFeedForwardPreProcessor;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer;
@@ -60,7 +59,7 @@ public class CifarEpoch {
         int nCores = 4; 
         int nEpochs = 1;
         SparkConf sparkConf = new SparkConf();
-        sparkConf.setMaster("local[" + nCores + "]");
+//        sparkConf.setMaster("local[" + nCores + "]");
         sparkConf.setAppName("CIFAR");
         sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
@@ -174,14 +173,12 @@ public class CifarEpoch {
             
             log.info("****************Starting Evaluation********************");
             Evaluation eval = new Evaluation();
-            int j = 0;
             for (DataSet ds : train) {
             	
                 INDArray output = net.output(ds.getFeatureMatrix());
               //  if(j > 25000)
-                	System.out.println(output);
+//                	System.out.println(output);
                 eval.eval(ds.getLabels(), output);
-                j++;
             }
             log.info(eval.stats());
             

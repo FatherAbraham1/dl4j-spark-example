@@ -50,8 +50,8 @@ public class CifarExample {
     private static final int BATCH_SIZE = 20;//80;
     private static final int ITERATIONS = 1;
     private static final int SEED = 123;
-    private static final int TRAIN_NUM = 21087;//25000;
-    private static final int TEST_NUM = 1400;//5000;    //SAMPLE_NUM = 5000
+//    private static final int TRAIN_NUM = 21087;//25000;
+//    private static final int TEST_NUM = 1400;//5000;    //SAMPLE_NUM = 5000
     private static final Logger log = LoggerFactory.getLogger(CifarExample.class);
 
     public static void main(String[] args) throws Exception {
@@ -59,7 +59,7 @@ public class CifarExample {
         //Create spark context
         int nCores = 4; //Number of CPU cores to use for training
         SparkConf sparkConf = new SparkConf();
-        sparkConf.setMaster("local[" + nCores + "]");
+//        sparkConf.setMaster("local[" + nCores + "]");
         sparkConf.setAppName("CIFAR");
         sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
@@ -72,7 +72,7 @@ public class CifarExample {
 	    for(File f : new File(trainPath).listFiles()) { 
 	        labels.add(f.getName());
 	    }
-	    System.out.println(labels);
+//	    System.out.println(labels);
 	    
 	    
 	    RecordReader recordReader = new ImageRecordReader(WIDTH, HEIGHT, CHANNELS, true, labels);
@@ -114,7 +114,6 @@ public class CifarExample {
 
         //Set up network configuration
         log.info("Build model....");
-        
         
         MultiLayerConfiguration.Builder builder = new NeuralNetConfiguration.Builder()
         		.seed(SEED)
