@@ -67,7 +67,7 @@ public class CifarEpoch {
         //Load data into memory
         log.info("****************Load data****************");
 
-        String labeledPath = System.getProperty("user.home") + "/cifar/train";
+        String labeledPath = System.getProperty("user.home") + "/cifar/test";
 
         RecordReader recordReader = new ImageRecordReader(WIDTH, HEIGHT, CHANNELS, true, LABELS);
 
@@ -170,18 +170,18 @@ public class CifarEpoch {
             log.info("Epoch " + i + "Start");
             net = sparkNetwork.fitDataSet(sparkDataTrain, nCores * BATCH_SIZE);
 
-            
+
             log.info("****************Starting Evaluation********************");
             Evaluation eval = new Evaluation();
             for (DataSet ds : train) {
-            	
+
                 INDArray output = net.output(ds.getFeatureMatrix());
-              //  if(j > 25000)
+                //  if(j > 25000)
 //                	System.out.println(output);
                 eval.eval(ds.getLabels(), output);
             }
             log.info(eval.stats());
-            
+
 
             log.info("****************Save configure files****************");
             try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get("model/c_coefficients.bin")))) {
@@ -192,7 +192,5 @@ public class CifarEpoch {
                 oos.writeObject(net.getUpdater());
             }
         }
-
-
     }
 }
