@@ -168,7 +168,7 @@ public class CifarEpoch {
         //Run learning. Here, we are training with approximately 'batchSize' examples on each executor
         for (int i = 0; i < nEpochs; i++) {
             log.info("Epoch " + i + "Start");
-            net = sparkNetwork.fitDataSet(sparkDataTrain, nCores * BATCH_SIZE);
+//            net = sparkNetwork.fitDataSet(sparkDataTrain, nCores * BATCH_SIZE);
 
 
             log.info("****************Starting Evaluation********************");
