@@ -47,7 +47,7 @@ public class CifarEpoch {
     private static final int WIDTH = 32;
     private static final int HEIGHT = 32;
     private static final int CHANNELS = 3;
-    private static final int BATCH_SIZE = 60;
+    private static final int BATCH_SIZE = 3;
     private static final int ITERATIONS = 1;
     private static final int SEED = 123;
     private static final List<String> LABELS = Arrays.asList("airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck");
@@ -56,7 +56,7 @@ public class CifarEpoch {
     public static void main(String[] args) throws Exception {
 
         
-        int nCores = 4; 
+        int nCores = 10;
         int nEpochs = 1;
         SparkConf sparkConf = new SparkConf();
 //        sparkConf.setMaster("local[" + nCores + "]");
@@ -67,7 +67,7 @@ public class CifarEpoch {
         //Load data into memory
         log.info("****************Load data****************");
 
-        String labeledPath = System.getProperty("user.home") + "/cifar/10epoch/train9";
+        String labeledPath = System.getProperty("user.home") + "/cifar/train";
 
         RecordReader recordReader = new ImageRecordReader(WIDTH, HEIGHT, CHANNELS, true, LABELS);
 
