@@ -1,4 +1,4 @@
-package org.deeplearning4j.examples.mlp;
+package org.deeplearning4j.examples.cnn;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.spark.SparkConf;
