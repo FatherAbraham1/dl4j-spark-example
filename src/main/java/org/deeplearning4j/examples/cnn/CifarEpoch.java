@@ -83,8 +83,8 @@ public class CifarEpoch {
         Collections.shuffle(train, new Random(12345));
 
         
-        JavaRDD<DataSet> sparkDataTrain = sc.parallelize(train);
-        sparkDataTrain.persist(StorageLevel.MEMORY_ONLY());
+//        JavaRDD<DataSet> sparkDataTrain = sc.parallelize(train);
+//        sparkDataTrain.persist(StorageLevel.MEMORY_ONLY());
         
         MultiLayerNetwork net;
         File f = new File("model/c_coefficients.bin");
@@ -161,7 +161,7 @@ public class CifarEpoch {
             net.setUpdater(null);
         }
 
-        SparkDl4jMultiLayer sparkNetwork = new SparkDl4jMultiLayer(sc, net);
+//        SparkDl4jMultiLayer sparkNetwork = new SparkDl4jMultiLayer(sc, net);
 
 
         log.info("****************Starting network training****************");
@@ -183,14 +183,14 @@ public class CifarEpoch {
             log.info(eval.stats());
 
 
-            log.info("****************Save configure files****************");
-            try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get("model/c_coefficients.bin")))) {
-                Nd4j.write(net.params(), dos);
-            }
-            FileUtils.write(new File("model/c_conf.json"), net.getLayerWiseConfigurations().toJson());
-            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("model/c_updater.bin"))) {
-                oos.writeObject(net.getUpdater());
-            }
+//            log.info("****************Save configure files****************");
+//            try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get("model/c_coefficients.bin")))) {
+//                Nd4j.write(net.params(), dos);
+//            }
+//            FileUtils.write(new File("model/c_conf.json"), net.getLayerWiseConfigurations().toJson());
+//            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("model/c_updater.bin"))) {
+//                oos.writeObject(net.getUpdater());
+//            }
         }
     }
 }
