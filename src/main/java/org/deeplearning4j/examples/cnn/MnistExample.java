@@ -55,9 +55,9 @@ public class MnistExample {
 
         int nChannels = 1;
         int outputNum = 10;
-        int numSamples = 6000;
-        int nTrain = 5000;
-        int nTest = 1000;
+        int numSamples = 60000;
+        int nTrain = 50000;
+        int nTest = 10000;
         int batchSize = 60;
         int iterations = 1;
         int seed = 123;
@@ -85,9 +85,8 @@ public class MnistExample {
         JavaRDD<DataSet> sparkDataTrain = sc.parallelize(train);
         sparkDataTrain.persist(StorageLevel.MEMORY_ONLY());
         MultiLayerNetwork net;
-//        File f = new File("model/coefficients.bin");
-//        if (f.exists() && !f.isDirectory()) {
-        if (false) {
+        File f = new File("model/coefficients.bin");
+        if (f.exists() && !f.isDirectory()) {
             log.info("load model...");
             //Load parameters from disk:
             INDArray newParams;
