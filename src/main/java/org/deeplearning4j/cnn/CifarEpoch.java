@@ -37,11 +37,7 @@ import java.nio.file.Paths;
 import java.util.*;
 
 /**
- * Simple example of learning MNIST with spark (local)
- * NOTE: This example runs and gives reasonable results, but better performance could be obtained
- * with some additional tuning of network hyperparameters
- *
- * @author Alex Black
+ * @author Vannahz
  */
 public class CifarEpoch {
 
