@@ -1,4 +1,4 @@
-package org.deeplearning4j.examples.cnn;
+package org.deeplearning4j.cnn;
 
 /**
  * Created by warn on 24/4/2016.
