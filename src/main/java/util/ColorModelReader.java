@@ -1,4 +1,4 @@
-package java.util;
+package util;
 
 import org.apache.commons.io.FileUtils;
 import org.canova.api.records.reader.RecordReader;
