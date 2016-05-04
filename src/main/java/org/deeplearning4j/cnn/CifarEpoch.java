@@ -61,7 +61,7 @@ public class CifarEpoch {
         sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
         sparkConf.set("spark.kryo.registrationRequired", "true");
         sparkConf.set("spark.default.parallelism", "" + nCores * 3);
-        sparkConf.set("spark.kryo.registrator", "org.deeplearning4j.examples.cnn.HydraKryoSerializer");
+        sparkConf.set("spark.kryo.registrator", "util.HydraKryoSerializer");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
         //Load data into memory

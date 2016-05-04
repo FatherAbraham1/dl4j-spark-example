@@ -1,4 +1,4 @@
-package org.deeplearning4j.cnn;
+package util;
 
 import com.esotericsoftware.kryo.Kryo;
 import de.javakaffee.kryoserializers.SynchronizedCollectionsSerializer;
@@ -25,7 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * org.deeplearning4j.cnn.HydraKryoSerializer
+ * util.HydraKryoSerializer
  * User: Mark Wang
  * Date: 04/05/2016
  */
