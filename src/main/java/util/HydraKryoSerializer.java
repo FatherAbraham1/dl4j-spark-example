@@ -71,6 +71,7 @@ public class HydraKryoSerializer implements KryoRegistrator, Serializable {
             kryo.register(Class.forName("org.deeplearning4j.nn.updater.MultiLayerUpdater$MultiLayerUpdaterAggregator"));
             kryo.register(Class.forName("org.deeplearning4j.nn.updater.NesterovsUpdater$NesterovsAggregator"));
             kryo.register(Class.forName("org.nd4j.linalg.learning.Nesterovs$NesterovsAggregator"));
+            kryo.register(Class.forName("org.deeplearning4j.nn.updater.AdaGradUpdater$AdaGradAggregator"));
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
