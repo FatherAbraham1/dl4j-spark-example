@@ -117,6 +117,11 @@
             <artifactId>scala-library</artifactId>
             <version>${scala.version}</version>
         </dependency>
+        <dependency>
+            <groupId>de.javakaffee</groupId>
+            <artifactId>kryo-serializers</artifactId>
+            <version>0.37</version>
+        </dependency>
         
 <dependency>
     <groupId>org.scala-lang</groupId>

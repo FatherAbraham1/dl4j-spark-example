@@ -19,7 +19,6 @@ import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
 import org.deeplearning4j.nn.conf.layers.setup.ConvolutionLayerSetup;
-import org.deeplearning4j.nn.conf.preprocessor.CnnToFeedForwardPreProcessor;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer;
@@ -44,7 +43,7 @@ public class CifarEpoch {
     private static final int WIDTH = 32;
     private static final int HEIGHT = 32;
     private static final int CHANNELS = 3;
-    private static final int BATCH_SIZE = 60;
+    private static final int BATCH_SIZE = 3;
     private static final int ITERATIONS = 1;
     private static final int SEED = 123;
     private static final List<String> LABELS = Arrays.asList("airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck");
@@ -53,18 +52,22 @@ public class CifarEpoch {
     public static void main(String[] args) throws Exception {
 
         
-        int nCores = 4; 
+        int nCores = 10;
         int nEpochs = 1;
         SparkConf sparkConf = new SparkConf();
-        sparkConf.setMaster("local[" + nCores + "]");
+//        sparkConf.setMaster("local[" + nCores + "]");
         sparkConf.setAppName("CIFAR");
         sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
+        sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+        sparkConf.set("spark.kryo.registrationRequired", "true");
+        sparkConf.set("spark.default.parallelism", "" + nCores * 3);
+        sparkConf.set("spark.kryo.registrator", "org.deeplearning4j.examples.cnn.HydraKryoSerializer");
 
         //Load data into memory
         log.info("****************Load data****************");
 
-        String labeledPath = System.getProperty("user.home") + "/cifar/10epoch/train9";
+        String labeledPath = System.getProperty("user.home") + "/cifar/test";
 
         RecordReader recordReader = new ImageRecordReader(WIDTH, HEIGHT, CHANNELS, true, LABELS);
 
@@ -167,20 +170,18 @@ public class CifarEpoch {
             log.info("Epoch " + i + "Start");
             net = sparkNetwork.fitDataSet(sparkDataTrain, nCores * BATCH_SIZE);
 
-            
+
             log.info("****************Starting Evaluation********************");
             Evaluation eval = new Evaluation();
-            int j = 0;
             for (DataSet ds : train) {
-            	
+
                 INDArray output = net.output(ds.getFeatureMatrix());
-              //  if(j > 25000)
-                	System.out.println(output);
+                //  if(j > 25000)
+//                	System.out.println(output);
                 eval.eval(ds.getLabels(), output);
-                j++;
             }
             log.info(eval.stats());
-            
+
 
             log.info("****************Save configure files****************");
             try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get("model/c_coefficients.bin")))) {
@@ -191,7 +192,5 @@ public class CifarEpoch {
                 oos.writeObject(net.getUpdater());
             }
         }
-
-
     }
 }

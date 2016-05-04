@@ -17,6 +17,7 @@ import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
 import org.deeplearning4j.nn.conf.layers.setup.ConvolutionLayerSetup;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.deeplearning4j.nn.updater.MultiLayerUpdater;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer;
 import org.nd4j.linalg.api.ndarray.INDArray;
@@ -45,19 +46,22 @@ public class MnistExample {
     public static void main(String[] args) throws Exception {
 
         //Create spark context
-        int nCores = 2; //Number of CPU cores to use for training
+        int nCores = 4; //Number of CPU cores to use for training
         SparkConf sparkConf = new SparkConf();
 //        sparkConf.setMaster("local[" + nCores + "]");
         sparkConf.setAppName("MNIST");
         sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
+        sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+        sparkConf.set("spark.kryo.registrationRequired", "true");
+        sparkConf.set("spark.kryo.registrator", "org.deeplearning4j.examples.cnn.HydraKryoSerializer");
 
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
         int nChannels = 1;
         int outputNum = 10;
-        int numSamples = 60000;
-        int nTrain = 50000;
-        int nTest = 10000;
+        int numSamples = 600;
+        int nTrain = 500;
+        int nTest = 100;
         int batchSize = 60;
         int iterations = 1;
         int seed = 123;
@@ -85,7 +89,7 @@ public class MnistExample {
         JavaRDD<DataSet> sparkDataTrain = sc.parallelize(train);
         sparkDataTrain.persist(StorageLevel.MEMORY_ONLY());
         MultiLayerNetwork net;
-        File f = new File("model/1coefficients.bin");
+        File f = new File("model/coefficients.bin");
         if (f.exists() && !f.isDirectory()) {
             log.info("load model...");
             //Load parameters from disk:
@@ -167,6 +171,11 @@ public class MnistExample {
             net = sparkNetwork.fitDataSet(sparkDataTrain, nCores * batchSize);
             System.out.println("----- Epoch " + i + " complete -----");
 
+            log.info("Sve configure file to hdfs");
+            //Write the network parameters:
+            try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get("model/coefficients.bin")))) {
+                Nd4j.write(net.params(), dos);
+            }
 
             //Evaluate (locally)
             Evaluation eval = new Evaluation();
@@ -175,11 +184,7 @@ public class MnistExample {
                 eval.eval(ds.getLabels(), output);
             }
             log.warn(eval.stats());
-            log.info("Sve configure file to hdfs");
-            //Write the network parameters:
-            try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get("model/coefficients.bin")))) {
-                Nd4j.write(net.params(), dos);
-            }
+            log.info("****************Example finished********************");
 
             //Write the network configuration:
             FileUtils.write(new File("model/conf.json"), net.getLayerWiseConfigurations().toJson());
@@ -189,6 +194,5 @@ public class MnistExample {
                 oos.writeObject(net.getUpdater());
             }
         }
-        log.info("****************Example finished********************");
     }
 }
