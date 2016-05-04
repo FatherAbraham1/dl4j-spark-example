@@ -67,12 +67,9 @@ public class CifarEpoch {
         //Load data into memory
         log.info("****************Load data****************");
 
-        String labeledPath = System.getProperty("user.home") + "/cifar/test";
-
+        String labeledPath = System.getProperty("user.home") + "/cifar/train";
         RecordReader recordReader = new ImageRecordReader(WIDTH, HEIGHT, CHANNELS, true, LABELS);
-
         recordReader.initialize(new FileSplit(new File(labeledPath)));
-
         DataSetIterator iter = new RecordReaderDataSetIterator(recordReader,
                 1, WIDTH * HEIGHT * CHANNELS, LABELS.size());
 
@@ -82,7 +79,6 @@ public class CifarEpoch {
         }
         Collections.shuffle(train, new Random(12345));
 
-        
         JavaRDD<DataSet> sparkDataTrain = sc.parallelize(train);
         sparkDataTrain.persist(StorageLevel.MEMORY_AND_DISK());
         
