@@ -59,9 +59,9 @@ public class MnistExample {
 
         int nChannels = 1;
         int outputNum = 10;
-        int numSamples = 600;
-        int nTrain = 500;
-        int nTest = 100;
+        int numSamples = 60000;
+        int nTrain = 50000;
+        int nTest = 10000;
         int batchSize = 60;
         int iterations = 1;
         int seed = 123;
