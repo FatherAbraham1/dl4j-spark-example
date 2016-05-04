@@ -84,7 +84,7 @@ public class CifarEpoch {
 
         
         JavaRDD<DataSet> sparkDataTrain = sc.parallelize(train);
-        sparkDataTrain.persist(StorageLevel.MEMORY_ONLY());
+        sparkDataTrain.persist(StorageLevel.MEMORY_AND_DISK());
         
         MultiLayerNetwork net;
         File f = new File("model/c_coefficients.bin");
