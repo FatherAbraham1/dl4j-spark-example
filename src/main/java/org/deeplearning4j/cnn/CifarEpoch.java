@@ -58,11 +58,11 @@ public class CifarEpoch {
 //        sparkConf.setMaster("local[" + nCores + "]");
         sparkConf.setAppName("CIFAR");
         sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
-        JavaSparkContext sc = new JavaSparkContext(sparkConf);
         sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
         sparkConf.set("spark.kryo.registrationRequired", "true");
         sparkConf.set("spark.default.parallelism", "" + nCores * 3);
         sparkConf.set("spark.kryo.registrator", "org.deeplearning4j.examples.cnn.HydraKryoSerializer");
+        JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
         //Load data into memory
         log.info("****************Load data****************");
