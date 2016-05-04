@@ -53,7 +53,6 @@ public class MnistExample {
         sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
         sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
         sparkConf.set("spark.kryo.registrationRequired", "true");
-        sparkConf.registerKryoClasses(new Class[] {MultiLayerUpdater[].class, Updater[].class, Updater.class});
         sparkConf.set("spark.kryo.registrator", "org.deeplearning4j.examples.cnn.HydraKryoSerializer");
 
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
