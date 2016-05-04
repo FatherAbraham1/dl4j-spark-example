@@ -48,7 +48,7 @@ public class MnistExample {
         //Create spark context
         int nCores = 4; //Number of CPU cores to use for training
         SparkConf sparkConf = new SparkConf();
-        sparkConf.setMaster("local[" + nCores + "]");
+//        sparkConf.setMaster("local[" + nCores + "]");
         sparkConf.setAppName("MNIST");
         sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
         sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");

@@ -20,12 +20,10 @@ import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.learning.AdaGrad;
 import org.nd4j.linalg.learning.Nesterovs;
 import scala.collection.mutable.WrappedArray;
-import scala.collection.mutable.WrappedArray$;
 
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -72,11 +70,11 @@ public class HydraKryoSerializer implements KryoRegistrator, Serializable {
         kryo.register(int[].class);
         kryo.register(boolean[].class);
         kryo.register(StatCounter.class);
-        try{
+        try {
             kryo.register(Class.forName("org.deeplearning4j.nn.updater.MultiLayerUpdater$MultiLayerUpdaterAggregator"));
             kryo.register(Class.forName("org.deeplearning4j.nn.updater.NesterovsUpdater$NesterovsAggregator"));
             kryo.register(Class.forName("org.nd4j.linalg.learning.Nesterovs$NesterovsAggregator"));
-        } catch (ClassNotFoundException e){
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
         SynchronizedCollectionsSerializer.registerSerializers(kryo);
