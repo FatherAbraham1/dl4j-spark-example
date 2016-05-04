@@ -1,9 +1,5 @@
 package org.deeplearning4j.cnn;
 
-/**
- * Created by warn on 24/4/2016.
- */
-
 import com.esotericsoftware.kryo.Kryo;
 import de.javakaffee.kryoserializers.SynchronizedCollectionsSerializer;
 import org.apache.spark.serializer.KryoRegistrator;
@@ -29,16 +25,16 @@ import java.util.LinkedHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * com.lordjoe.distributed.hydra.HydraKryoSerializer
- * User: Steve
- * Date: 10/28/2014
+ * org.deeplearning4j.cnn.HydraKryoSerializer
+ * User: Mark Wang
+ * Date: 04/05/2016
  */
 public class HydraKryoSerializer implements KryoRegistrator, Serializable {
 
     /**
      * register a class
      *
-     * @param kryo
+     * @param kryo kryo object
      * @param pC   name of a class - might not exist
      */
     public void doRegistration(final Kryo kryo, final Class pC) {
