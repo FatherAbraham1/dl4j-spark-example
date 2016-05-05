@@ -1,7 +1,5 @@
 package org.deeplearning4j.cnn;
 
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.core.util.StatusPrinter;
 import org.apache.commons.io.FileUtils;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
@@ -52,9 +50,6 @@ public class CifarEpoch {
     private static final Logger log = LoggerFactory.getLogger(CifarEpoch.class);
 
     public static void main(String[] args) throws Exception {
-
-        LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-        StatusPrinter.print(lc);
         
         int nCores = 10;
         int nEpochs = 1;

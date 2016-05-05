@@ -1,7 +1,5 @@
 package org.deeplearning4j.cnn;
 
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.core.util.StatusPrinter;
 import org.apache.commons.io.FileUtils;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
@@ -45,13 +43,11 @@ public class MnistExample {
     private static final Logger log = LoggerFactory.getLogger(MnistExample.class);
 
     public static void main(String[] args) throws Exception {
-        LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-        StatusPrinter.print(lc);
 
         //Create spark context
         int nCores = 4; //Number of CPU cores to use for training
         SparkConf sparkConf = new SparkConf();
-//        sparkConf.setMaster("local[" + nCores + "]");
+        sparkConf.setMaster("local[" + nCores + "]");
         sparkConf.setAppName("MNIST");
         sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
         sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
