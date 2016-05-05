@@ -66,7 +66,7 @@ public class CifarEpoch {
         //Load data into memory
         log.info("****************Load data****************");
 
-        String labeledPath = System.getProperty("user.home") + "/cifar/train";
+        String labeledPath = System.getProperty("user.home") + "/cifar/test";
         RecordReader recordReader = new ImageRecordReader(WIDTH, HEIGHT, CHANNELS, true, LABELS);
         recordReader.initialize(new FileSplit(new File(labeledPath)));
         DataSetIterator iter = new RecordReaderDataSetIterator(recordReader,
