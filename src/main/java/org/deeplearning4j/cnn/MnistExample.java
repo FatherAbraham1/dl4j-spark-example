@@ -47,7 +47,7 @@ public class MnistExample {
         //Create spark context
         int nCores = 4; //Number of CPU cores to use for training
         SparkConf sparkConf = new SparkConf();
-        sparkConf.setMaster("local[" + nCores + "]");
+//        sparkConf.setMaster("local[" + nCores + "]");
         sparkConf.setAppName("MNIST");
         sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
         sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
@@ -171,7 +171,7 @@ public class MnistExample {
             net = sparkNetwork.fitDataSet(sparkDataTrain, nCores * batchSize);
             System.out.println("----- Epoch " + i + " complete -----");
 
-            log.info("Sve configure file to hdfs");
+            log.info("Save configure file to hdfs");
             //Write the network parameters:
             try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get("model/coefficients.bin")))) {
                 Nd4j.write(net.params(), dos);
