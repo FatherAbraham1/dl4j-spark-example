@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-spark-submit --class org.deeplearning4j.cnn.MnistExample --master spark://student32-x1:7077 --conf spark.driver.extraClassPath=~/.m2/repository/ch/qos/logback/logback-core/1.1.3/logback-core-1.1.3.jar:~/.m2/repository/ch/qos/logback/logback-classic/1.1.3/logback-classic-1.1.3.jar --conf spark.executor.extraClassPath=~/.m2/repository/ch/qos/logback/logback-core/1.1.3/logback-core-1.1.3.jar:~/.m2/repository/ch/qos/logback/logback-classic/1.1.3/logback-classic-1.1.3.jar ./target/dl4j-spark-cdh5-examples-1.0-SNAPSHOT.jar
+spark-submit --class org.deeplearning4j.cnn.MnistExample --master spark://student32-x1:7077 ./target/dl4j-spark-cdh5-examples-1.0-SNAPSHOT.jar
