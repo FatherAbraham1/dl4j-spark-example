@@ -43,7 +43,7 @@ public class CifarEpoch {
     private static final int WIDTH = 32;
     private static final int HEIGHT = 32;
     private static final int CHANNELS = 3;
-    private static final int BATCH_SIZE = 6;
+    private static final int BATCH_SIZE = 4;
     private static final int ITERATIONS = 1;
     private static final int SEED = 123;
     private static final List<String> LABELS = Arrays.asList("airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck");
