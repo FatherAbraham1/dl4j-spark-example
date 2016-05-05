@@ -50,7 +50,7 @@ public class CifarEpoch {
     private static final Logger log = LoggerFactory.getLogger(CifarEpoch.class);
 
     public static void main(String[] args) throws Exception {
-        
+
         int nCores = 10;
         int nEpochs = 1;
         SparkConf sparkConf = new SparkConf();
@@ -80,11 +80,11 @@ public class CifarEpoch {
 
         JavaRDD<DataSet> sparkDataTrain = sc.parallelize(train);
         sparkDataTrain.persist(StorageLevel.MEMORY_AND_DISK());
-        
+
         MultiLayerNetwork net;
         File f = new File("model/c_coefficients.bin");
         if (f.exists() && !f.isDirectory()) {
-        	
+
             log.info("load model...");
             INDArray newParams;
             try (DataInputStream dis = new DataInputStream(new FileInputStream("model/c_coefficients.bin"))) {
