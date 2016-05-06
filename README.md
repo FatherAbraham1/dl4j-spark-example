@@ -7,7 +7,7 @@ Add some hdfs reader and writer
 
 # CifarEpoch
 
-implemented by Vannahz
+Contains a six-layer model to train 50000 images with 10 labels.
 
 # ModelReader & ColorModelReader
 
