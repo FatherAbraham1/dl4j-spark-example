@@ -43,7 +43,7 @@ public class CifarEpoch {
     private static final int WIDTH = 32;
     private static final int HEIGHT = 32;
     private static final int CHANNELS = 3;
-    private static final int BATCH_SIZE = 6;
+    private static final int BATCH_SIZE = 40;
     private static final int ITERATIONS = 1;
     private static final int SEED = 123;
     private static final List<String> LABELS = Arrays.asList("airplane", "automobile", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck");
@@ -51,7 +51,7 @@ public class CifarEpoch {
 
     public static void main(String[] args) throws Exception {
 
-        int nCores = 10;
+        int nCores = 6;
         int nEpochs = 1;
         SparkConf sparkConf = new SparkConf();
 //        sparkConf.setMaster("local[" + nCores + "]");
@@ -59,7 +59,7 @@ public class CifarEpoch {
         sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
         sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
         sparkConf.set("spark.kryo.registrationRequired", "true");
-        sparkConf.set("spark.default.parallelism", "" + nCores * 3);
+        sparkConf.set("spark.default.parallelism", "" + nCores * 5);
         sparkConf.set("spark.kryo.registrator", "util.HydraKryoSerializer");
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
