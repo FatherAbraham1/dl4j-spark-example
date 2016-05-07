@@ -2,4 +2,3 @@
 git reset --hard
 git pull origin mark
 mvn clean package
-./start-application.sh
